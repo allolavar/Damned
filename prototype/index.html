@@ -1,0 +1,771 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Damned Bastard Chess</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Cinzel:wght@600;800&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0a1210;--panel:rgba(9,17,15,.86);--line:#2c4038;--ink:#eaf2ee;--mute:#a3b8af;
+  --a:#62cfff;--b:#ff6b5e;--gold:#f2c35b;--mv:#6ff0c0;--atk:#ff5578;--skill:#b78cff;--burn:#ff9a4d;--shield:#8fb7ff;
+  --fd:"Cinzel",Georgia,serif;--fb:"Alegreya Sans","Segoe UI",system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.35 var(--fb);overflow:hidden;
+  padding-block:6px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.bg{position:fixed;inset:0;z-index:0;background:#07100d url(forest.jpg) center/cover no-repeat}
+.bg::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(5,10,9,.28),rgba(5,10,9,.52))}
+.app{position:relative;z-index:1;height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.top{display:flex;align-items:center;gap:6px;min-height:42px}
+.top h1{font:800 15px/1.1 var(--fd);letter-spacing:.06em;margin:0;flex:1;min-width:0;text-shadow:0 1px 3px #000}
+.tb{font-weight:700;font-size:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:0 11px;min-height:40px;cursor:pointer}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.side{--tc:var(--a);background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:6px 10px 8px;display:grid;gap:5px;min-width:0}
+.side.tb2{--tc:var(--b)}
+.side.on{border-color:var(--tc)}
+.sn{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px}
+.sn .dot{width:10px;height:10px;border-radius:50%;background:var(--tc)}
+.sn .mn{margin-left:auto;font-weight:700;color:var(--mute);font-variant-numeric:tabular-nums;font-size:14px}
+.mana{display:flex;gap:2px}
+.mana i{flex:1;height:7px;border-radius:2px;background:var(--line)}
+.mana i.f{background:var(--skill)}
+.phase{text-align:center;font-weight:800;font-size:15px;text-shadow:0 1px 3px #000}
+.sw{flex:1;min-height:0;display:grid;place-items:center;position:relative}
+.sw .stage{align-self:end}
+.pop{padding:6px 10px 8px;gap:4px}
+.pop .thumb{width:36px;height:50px}
+.sk2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sk2 .sb{flex:1 1 150px;width:auto}
+.sk2 .why{flex:1 1 100%;order:3}
+.popbar{position:absolute;left:0;right:0;top:0;z-index:6}
+.stage{position:relative;width:min(100%,560px,max(240px,calc((100dvh - 330px)/.84)));container-type:inline-size;perspective:1400px;perspective-origin:50% 35%}
+.stage:not(.s3){aspect-ratio:1}
+.stage.s3{aspect-ratio:1/.84;display:grid;place-items:center}
+.board{display:grid;grid-template-columns:repeat(8,1fr);width:100%;aspect-ratio:1;border:max(2px,.5cqw) solid #15100a;border-radius:4px;background:#1b2a1c url(board.jpg) center/100% 100% no-repeat}
+.board.t3{transform:rotateX(42deg) scale(.84);transform-style:preserve-3d;box-shadow:0 2.4cqw 0 #120d07,0 4.5cqw 3cqw rgba(0,0,0,.6)}
+.board.t3 .sq{transform-style:preserve-3d}
+.sq{position:relative;display:grid;place-items:center;border:0;padding:0;margin:0;background:none;cursor:pointer;min-width:0}
+.sq::before,.sq::after{content:"";position:absolute;pointer-events:none}
+.sq.mv::before{width:28%;aspect-ratio:1;border-radius:50%;background:var(--mv);box-shadow:0 0 0 .5cqw rgba(0,0,0,.55)}
+.sq.sel::after{inset:0;box-shadow:inset 0 0 0 .7cqw var(--gold)}
+.sq.at::after{inset:0;box-shadow:inset 0 0 0 .7cqw var(--atk);background:color-mix(in srgb,var(--atk) 26%,transparent)}
+.sq.sk::after{inset:0;box-shadow:inset 0 0 0 .7cqw var(--skill);background:color-mix(in srgb,var(--skill) 30%,transparent)}
+.up{position:absolute;inset:0;display:grid;place-items:center;transform-origin:50% 66%}
+.board.t3 .up{transform:rotateX(-42deg)}
+.fig{--tc:var(--a);display:block;overflow:visible;pointer-events:none}
+.fig.b{--tc:var(--b)}
+.F-o{stroke:#12161d;stroke-width:2;stroke-linejoin:round}
+.F-tc{fill:var(--tc)}
+.F-tcd{fill:color-mix(in srgb,var(--tc) 55%,#000)}
+.up>.fig{position:absolute;left:6%;bottom:16%;width:88%;height:auto;aspect-ratio:100/138}
+.thumb{flex:none;width:42px;height:58px}
+.thumb .fig{width:100%;height:100%}
+.sq.rdy .fig{filter:drop-shadow(0 0 .9cqw var(--atk)) drop-shadow(0 0 .5cqw var(--atk))}
+.md{position:absolute;bottom:42%;left:3%;font-size:3.3cqw;font-weight:800;color:var(--ink);line-height:1.2;padding:0 .9cqw;border-radius:99px;background:rgba(0,0,0,.7);pointer-events:none}
+.fc{position:absolute;width:0;height:0;border:1.3cqw solid transparent;pointer-events:none;z-index:2}
+.fc.u{top:4%;left:50%;margin-left:-1.3cqw;border-bottom-color:var(--gold);border-top-width:0}
+.fc.d{bottom:9.5%;left:50%;margin-left:-1.3cqw;border-top-color:var(--gold);border-bottom-width:0}
+.fc.l{left:6%;top:50%;margin-top:-1.3cqw;border-right-color:var(--gold);border-left-width:0}
+.fc.r{right:6%;top:50%;margin-top:-1.3cqw;border-left-color:var(--gold);border-right-width:0}
+.hp{position:absolute;left:18%;right:18%;top:-30%;height:1.1cqw;min-height:4px;border-radius:2px;background:rgba(0,0,0,.65);overflow:hidden;border:1px solid rgba(0,0,0,.7)}
+.hp u{display:block;height:100%;background:var(--mv)}
+.hp.mid u{background:var(--gold)}
+.hp.low u{background:var(--atk)}
+.lv{position:absolute;bottom:24%;left:5%;display:flex;gap:2px}
+.lv i,.st i{display:block;width:1.1cqw;height:1.1cqw;min-width:4px;min-height:4px;border-radius:50%}
+.lv i{background:var(--gold)}
+.st{position:absolute;bottom:24%;right:5%;display:flex;gap:2px}
+.st .bn{background:var(--burn)}.st .sh{background:var(--shield)}.st .bf{background:var(--gold)}
+.f-hit,.f-heal,.f-fire{animation:flash .55s ease-out}
+.f-hit{--c:var(--atk)}.f-heal{--c:var(--mv)}.f-fire{--c:var(--burn)}
+@keyframes flash{from{box-shadow:inset 0 0 0 100px color-mix(in srgb,var(--c) 60%,transparent)}to{box-shadow:inset 0 0 0 100px transparent}}
+.fl{position:absolute;left:0;right:0;top:0;text-align:center;font-weight:800;font-size:3.8cqw;z-index:3;pointer-events:none;animation:up 1.1s ease-out forwards;color:var(--c);text-shadow:0 1px 3px #000,0 0 2px #000}
+.fl.hit{--c:var(--atk)}.fl.heal{--c:var(--mv)}.fl.fire{--c:var(--burn)}
+@keyframes up{from{transform:translateY(60%);opacity:1}to{transform:translateY(-110%);opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.fl{display:none}}
+.ov{position:absolute;inset:0;z-index:5;pointer-events:none}
+.pop{--tc:var(--a);position:relative;pointer-events:auto;background:rgba(8,15,13,.96);border:2px solid var(--tc);border-radius:12px;padding:8px 10px 10px;display:grid;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.6);font-size:15px}
+.pop.b{--tc:var(--b)}
+.ph{display:flex;gap:8px;align-items:center}
+.pt{min-width:0;flex:1}
+.pt b{display:block;font-size:16px;line-height:1.15}
+.pt small{display:block;color:var(--mute);font-size:13px}
+.tok{--tc:var(--a);flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:22px;line-height:1;border:2px solid var(--tc);color:var(--tc);background:color-mix(in srgb,var(--tc) 26%,#0b1411);font-family:"Segoe UI Symbol","Noto Sans Symbols 2","Apple Symbols","DejaVu Sans",serif;padding-bottom:2px}
+.tok.b{--tc:var(--b)}
+.x{flex:none;width:40px;height:40px;border:0;background:none;font-size:26px;line-height:1;color:var(--mute);cursor:pointer}
+.bar{height:7px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+.bar u{display:block;height:100%;background:var(--mv)}
+.bar.mid u{background:var(--gold)}.bar.low u{background:var(--atk)}
+.ps{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:14px;color:var(--mute)}
+.ps b{color:var(--ink);font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:5px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:700;padding:1px 8px;border-radius:99px;border:1px solid currentColor}
+.chip.bn{color:var(--burn)}.chip.sh{color:var(--shield)}.chip.bf{color:var(--gold)}
+.btn{font-weight:700;font-size:16px;border:1px solid var(--line);background:rgba(255,255,255,.07);padding:10px 14px;border-radius:8px;min-height:44px;cursor:pointer}
+.btn.pri{background:var(--gold);color:#1a1405;border-color:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn[aria-pressed="true"]{background:var(--ink);color:#0a1210;border-color:var(--ink)}
+.sb{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;background:var(--skill);color:#150a2b;border-color:transparent}
+.sb .cost{font-weight:800;font-size:13px;white-space:nowrap}
+.why{font-size:13px;color:var(--mute)}
+.lnk{justify-self:start;background:none;border:0;color:var(--mute);font-size:13px;text-decoration:underline;min-height:32px;padding:0 4px;cursor:pointer}
+.det{font-size:14px;color:var(--mute);display:grid;gap:6px}
+.det p{margin:0}
+.det b{color:var(--ink)}
+.meta{font-variant-numeric:tabular-nums}
+.endc{position:absolute;left:8%;right:8%;top:42%;transform:translateY(-50%);pointer-events:auto;background:rgba(8,15,13,.96);border:2px solid var(--gold);border-radius:12px;padding:14px;text-align:center;display:grid;gap:8px}
+.endc h2{margin:0;font:800 19px var(--fd);letter-spacing:.04em}
+.endc p{margin:0;color:var(--mute)}
+.dock{display:grid;gap:6px;padding-bottom:4px}
+.hint{margin:0;text-align:center;font-size:14px;color:var(--ink);text-wrap:balance;min-height:2.7em;text-shadow:0 1px 3px #000}
+.mainbtn{width:100%;min-height:52px;font-size:17px}
+.last{display:grid;gap:1px;font-size:13px;color:var(--mute);min-height:2.6em;text-shadow:0 1px 2px #000}
+.last p,.log p{margin:0}
+.last p::before,.log p::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;background:var(--a)}
+.last p.b::before,.log p.b::before{background:var(--b)}
+.srow{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:15px}
+.srow+.srow{margin-top:4px}
+.seg{display:flex}
+.seg .btn{border-radius:0;min-height:40px;padding:6px 12px}
+.seg .btn:first-child{border-radius:8px 0 0 8px}
+.seg .btn:last-child{border-radius:0 8px 8px 0;border-left:0}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(5,10,9,.97);overflow:auto;padding-block:12px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet>*{max-width:640px;margin-inline:auto}
+.sheet>*+*{margin-top:12px}
+.sh{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sh h2{margin:0;font:800 20px var(--fd);letter-spacing:.05em}
+.card{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.grid{display:grid;gap:10px}
+.ch{display:flex;gap:12px;align-items:center}
+.ch h2{font-size:18px;margin:0;line-height:1.15}
+.ch small{display:block;color:var(--mute);font-size:14px}
+.mvtxt{margin:10px 0 0;font-size:15px;color:var(--mute)}
+.skill{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;display:grid;gap:6px}
+.skill h3{margin:0;font-size:17px;color:var(--skill)}
+.skill p{margin:0;font-size:15px}
+.lvls{font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums;margin-top:6px}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mrow+.mrow{margin-top:10px}
+.log{display:grid;gap:3px;font-size:15px;color:var(--mute)}
+.log h3{margin:0 0 4px;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.rules ol{margin:0;padding-left:20px;display:grid;gap:10px}
+.rules li{padding-left:2px}
+.rules b{color:var(--ink)}
+.rules .note{margin:12px 0 0;color:var(--mute);font-size:15px}
+h2.sec{font:800 15px var(--fd);letter-spacing:.08em;margin:0 0 10px}
+</style>
+
+<div class="bg"></div>
+<div class="app">
+  <header class="top">
+    <h1>Damned Bastard Chess</h1>
+    <button class="tb" data-sheet="pieces">Pièces</button>
+    <button class="tb" data-sheet="rules">Règles</button>
+    <button class="tb" data-sheet="menu">Menu</button>
+  </header>
+  <div class="hud" id="hud"></div>
+  <div class="phase" id="chip"></div>
+  <div class="sw">
+    <div class="popbar" id="popbar"></div>
+    <div class="stage s3" id="stage">
+      <div class="board t3" id="board"></div>
+      <div class="ov" id="ov"></div>
+    </div>
+  </div>
+  <div class="dock">
+    <p class="hint" id="hint"></p>
+    <div id="setup" hidden></div>
+    <button class="btn pri mainbtn" id="endBtn">Passer au combat</button>
+    <div class="last" id="last"></div>
+  </div>
+</div>
+<div class="sheet" id="sheet" hidden></div>
+<template id="tplRules"><div class="card rules">
+      <h2 class="sec">Règles du prototype</h2>
+      <ol>
+        <li><b>But.</b> Faire tomber le Roi adverse à 0 PV. Les Éveillés (bleu, en bas) affrontent les Portails (rouge, en haut).</li>
+        <li><b>Un tour, deux phases.</b> 1. Mouvement : une pièce se déplace (ou on passe). 2. Attaques : toutes les attaques possibles se jouent ici. Une attaque non jouée à la fin de la phase est perdue. Les compétences se lancent à tout moment, sans terminer le tour.</li>
+        <li><b>Attaquer.</b> Tout se passe au corps à corps : une pièce frappe un ennemi sur une case voisine, dans les directions où elle se déplace (le Pion en diagonale avant). Seules les compétences à distance (comme la Boule de feu : 3 cases, coût en mana) et le giron de la Sentinelle portent plus loin. Les dégâts valent son ATK et elle ne bouge pas. Une pièce attaque au plus 2 fois par tour, jamais deux fois la même cible. Un Pion peut frapper ses deux diagonales, une Dame ne peut pas frapper tout ce qui l'entoure. Une pièce déjà à portée d'un ennemi peut l'attaquer sans bouger.</li>
+        <li><b>Orientation.</b> Chaque pièce, sauf le Pion, est orientée : elle regarde vers sa dernière case de déplacement ou sa dernière cible (au départ, vers l'ennemi). Un petit triangle doré sur son socle montre son regard. Une attaque au corps à corps portée dans son dos fait +50 % de dégâts. Le Pion n'a pas d'orientation : il n'attaque que vers l'avant et ne subit pas ce bonus.</li>
+        <li><b>Cavaliers.</b> Un Cavalier qui s'est déplacé ne peut pas se déplacer au tour suivant. Chaque Cavalier a un rôle choisi avant la première action, définitif ensuite. <b>Sentinelle</b> : attaque dans son giron en L, sauf le tour où il bouge, et tout ennemi qui entre dans son giron devient une cible à votre prochain tour (à vous de rester vigilant). <b>Lancier</b> : attaque l'une des 3 cases devant lui, son orientation suit son dernier déplacement.</li>
+        <li><b>Mana.</b> Chaque camp commence avec 3 points et en gagne 1 au début de son tour, 13 au maximum. Chaque compétence coûte du mana et demande un temps de recharge.</li>
+        <li><b>Compétences.</b> Une par type de pièce, toutes différentes. Cinq pour l'instant : celle du Cavalier est retirée, à redéfinir. Elles ne terminent pas le tour.</li>
+        <li><b>Niveaux.</b> Chaque pièce qui élimine un ennemi gagne un niveau (3 maximum) : +2 PV max, +1 ATK, 2 PV soignés.</li>
+        <li><b>États.</b> Brûlure : 3 dégâts au début de votre tour, pendant 3 tours. Garde de fer : dégâts divisés par 2 jusqu'à votre prochain tour. Cri de guerre : +30 % d'ATK pendant 2 tours.</li>
+        <li><b>Promotion.</b> Un Pion qui atteint la dernière rangée devient une Dame.</li>
+        <li><b>Échec et mat.</b> Quand il ne reste que le Roi, il doit bouger à chaque tour. S'il ne peut plus jouer, c'est échec et mat : la partie est perdue.</li>
+      </ol>
+      <p class="note">Valeurs à équilibrer ensemble : mana de départ, gain par tour, bonus de niveau. Pas encore dans ce prototype : classes et races, équipements, cartes, arbre complet des compétences du GDD.</p>
+    </div></template>
+<script>
+
+(function(){
+const $=s=>document.querySelector(s);
+const ORTH=[[1,0],[-1,0],[0,1],[0,-1]],DIAG=[[1,1],[1,-1],[-1,1],[-1,-1]],KN=[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]];
+const VAL={P:1,N:3,B:3,R:5,Q:9,K:20};
+const SIDES={w:{name:"Éveillés"},b:{name:"Portails"}};
+const T={
+  P:{n:"Pion",role:"Milicien",g:"♟",hp:8,atk:3,mv:`1 case en avant, 2 cases tant qu'il reste dans son camp. Attaque en diagonale avant. Devient une Dame sur la dernière rangée.`},
+  R:{n:"Tour",role:"Gardien des murs",g:"♜",hp:15,atk:7,mv:"Lignes et colonnes, sans limite de cases. Attaque au corps à corps : les cases voisines en ligne et en colonne."},
+  B:{n:"Fou",role:"Prêtre",g:"♝",hp:12,atk:9,mv:"Diagonales, sans limite de cases. Attaque au corps à corps : les 4 diagonales voisines."},
+  N:{n:"Cavalier",role:"Assassin",g:"♞",hp:14,atk:8,mv:"En L : 2 cases dans une direction puis 1 de côté. Saute par-dessus les pièces. Ne peut pas bouger deux tours de suite."},
+  Q:{n:"Dame",role:"Archimage",g:"♛",hp:18,atk:11,mv:"Toutes les directions, sans limite de cases. Attaque au corps à corps : les 8 cases voisines (2 cibles max par tour)."},
+  K:{n:"Roi",role:"Seigneur de guerre",g:"♚",hp:12,atk:11,mv:"1 case dans toutes les directions. Attaque les 8 cases voisines. S'il tombe, la partie est perdue."}
+};
+const G=t=>T[t].g+"︎";
+const inb=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
+const sgn=Math.sign;
+const cheb=(a,b)=>Math.max(Math.abs(a.r-b.r),Math.abs(a.c-b.c));
+const sq=(r,c)=>String.fromCharCode(97+c)+(8-r);
+let S,uid=0;
+const at=(r,c)=>S.pieces.find(x=>x.r===r&&x.c===c);
+const byId=id=>S.pieces.find(x=>x.id===id);
+const side=s=>S.pieces.filter(p=>p.side===s);
+const opp=s=>s==="w"?"b":"w";
+const nm=p=>`${T[p.t].n} (${SIDES[p.side].name})`;
+const L=(s,t)=>{S.log.unshift({s,t});if(S.log.length>12)S.log.pop()};
+const fx=(t,type,txt)=>S.fx.push({r:t.r,c:t.c,type,txt});
+const dmgOf=(p,m=1)=>Math.max(1,Math.round(p.atk*(p.buff>0?1.3:1)*m));
+
+const faceOf=(dr,dc)=>Math.abs(dr)>=Math.abs(dc)?{dr:sgn(dr),dc:0}:{dr:0,dc:sgn(dc)};
+function rearMult(a,t){if(t.t==="P")return 1;const v=(a.r-t.r)*t.face.dr+(a.c-t.c)*t.face.dc;return v<0?1.5:1}
+function turnTo(p,t){if(p.t!=="P"&&t)p.face=faceOf(t.r-p.r,t.c-p.c)}
+function mk(t,s,r,c){const d=T[t];return{id:++uid,t,side:s,r,c,hp:d.hp,max:d.hp,atk:d.atk,lvl:1,cd:0,atks:0,burn:0,shield:0,buff:0,usedSkill:false,hitIds:[],movedLast:false,cantMove:false,mode:t==="N"?"sentinel":null,face:{dr:s==="w"?-1:1,dc:0},movedNow:false,reacted:false}}
+
+function arc(p){
+  const{dr,dc}=p.face,o=[];
+  for(const k of[-1,0,1]){const r=dr!==0?p.r+dr:p.r+k,c=dr!==0?p.c+k:p.c+dc;if(inb(r,c))o.push({r,c})}
+  return o;
+}
+function reach(p){
+  const out=[],me=p.side,add=(r,c,kind)=>out.push({r,c,kind});
+  const slide=(dirs,max)=>{for(const[dr,dc]of dirs){for(let i=1;i<=max;i++){const r=p.r+dr*i,c=p.c+dc*i;if(!inb(r,c))break;const o=at(r,c);if(!o)add(r,c,"move");else{if(o.side!==me&&i===1)add(r,c,"atk");break}}}};
+  if(p.t==="R")slide(ORTH,8);
+  else if(p.t==="B")slide(DIAG,8);
+  else if(p.t==="Q")slide(ORTH.concat(DIAG),8);
+  else if(p.t==="K")slide(ORTH.concat(DIAG),1);
+  else if(p.t==="N"){
+    for(const[dr,dc]of KN){const r=p.r+dr,c=p.c+dc;if(!inb(r,c))continue;const o=at(r,c);if(!o)add(r,c,"move");else if(o.side!==me&&p.mode!=="lance")add(r,c,"atk")}
+    if(p.mode==="lance")for(const q of arc(p)){const o=at(q.r,q.c);if(o&&o.side!==me)add(q.r,q.c,"atk")}
+  }
+  else{
+    const d=me==="w"?-1:1,r1=p.r+d,r2=p.r+2*d;
+    if(inb(r1,p.c)&&!at(r1,p.c)){add(r1,p.c,"move");const own=me==="w"?r2>=4:r2<=3;if(own&&inb(r2,p.c)&&!at(r2,p.c))add(r2,p.c,"move")}
+    for(const dc of[-1,1]){const c=p.c+dc;if(!inb(r1,c))continue;const o=at(r1,c);if(o&&o.side!==me)add(r1,c,"atk")}
+  }
+  return out;
+}
+function threatSq(q){
+  if(q.t==="P"){const d=q.side==="w"?-1:1;return[-1,1].map(dc=>({r:q.r+d,c:q.c+dc}))}
+  if(q.t==="N")return q.mode==="lance"?arc(q):KN.map(([dr,dc])=>({r:q.r+dr,c:q.c+dc}));
+  const dirs=q.t==="R"?ORTH:q.t==="B"?DIAG:ORTH.concat(DIAG);
+  return dirs.map(([dr,dc])=>({r:q.r+dr,c:q.c+dc}));
+}
+const threatened=(r,c,by)=>S.pieces.some(q=>q.side===by&&threatSq(q).some(s=>s.r===r&&s.c===c));
+
+/* Compétences : une par type de pièce */
+const SK={
+  P:{n:"Garde de fer",cost:2,cd:3,self:true,d:"Réduit de 50 % les dégâts reçus jusqu'à votre prochain tour.",
+    tg:()=>[],
+    run(p){p.shield=1;fx(p,"heal","Garde");L(p.side,`${nm(p)} lève sa garde.`)}},
+  R:{n:"Coup de bélier",cost:3,cd:4,d:"Charge en ligne droite sur un ennemi (4 cases max, chemin libre). Dégâts d'attaque, l'ennemi recule d'une case, la Tour perd 3 PV.",
+    tg(p){const o=[];for(const[dr,dc]of ORTH)for(let i=1;i<=4;i++){const r=p.r+dr*i,c=p.c+dc*i;if(!inb(r,c))break;const x=at(r,c);if(x){if(x.side!==p.side)o.push(x);break}}return o},
+    run(p,t){const dr=sgn(t.r-p.r),dc=sgn(t.c-p.c);p.r=t.r-dr;p.c=t.c-dc;p.face={dr,dc};
+      const rm=rearMult(p,t);const res=hit(t,dmgOf(p,rm),p,false,rm>1?"dos":"");
+      if(!res.dead){const nr=t.r+dr,nc=t.c+dc;if(inb(nr,nc)&&!at(nr,nc)){t.r=nr;t.c=nc}}
+      p.hp=Math.max(1,p.hp-3);fx(p,"hit","-3")}},
+  B:{n:"Lumière divine",cost:3,cd:5,d:"Soigne un allié blessé à 3 cases ou moins (vous compris) de 50 % de ses PV maximum.",
+    tg(p){return side(p.side).filter(a=>cheb(a,p)<=3&&a.hp<a.max)},
+    run(p,t){const h=Math.min(t.max-t.hp,Math.ceil(t.max/2));t.hp+=h;fx(t,"heal","+"+h);L(p.side,`${nm(t)} récupère ${h} PV.`)}},
+  N:{n:"Compétence à définir",none:true,cost:0,cd:0,d:"La compétence du Cavalier est retirée pour le moment.",tg:()=>[],run(){}},
+  Q:{n:"Boule de feu",cost:4,cd:4,d:"Tire à 3 cases ou moins : 50 % de l'ATK en dégâts, puis brûlure de 3 PV par tour pendant 3 tours.",
+    tg(p){return side(opp(p.side)).filter(e=>cheb(e,p)<=3)},
+    run(p,t){turnTo(p,t);const res=hit(t,dmgOf(p,.5),p);if(!res.dead){t.burn=3;fx(t,"fire","Brûlure")}}},
+  K:{n:"Cri de guerre",cost:3,cd:5,self:true,d:"Les alliés à 2 cases ou moins (Roi compris) gagnent +30 % d'ATK pendant 2 tours.",
+    tg:()=>[],
+    run(p){for(const a of side(p.side))if(cheb(a,p)<=2){a.buff=2;fx(a,"heal","ATK+")}L(p.side,`${nm(p)} pousse un cri de guerre.`)}}
+};
+
+function hit(t,amt,src,pure,tag){
+  if(!pure&&t.shield>0)amt=Math.max(1,Math.ceil(amt/2));
+  t.hp-=amt;fx(t,"hit","-"+amt+(tag?" "+tag:""));
+  L(t.side===(src?src.side:"x")?t.side:(src?src.side:t.side),src?`${nm(src)} frappe ${nm(t)} : ${amt} dégâts${tag?" ("+tag+")":""}.`:`${nm(t)} brûle : ${amt} dégâts.`);
+  if(t.hp<=0){kill(t,src);return{amt,dead:true}}
+  return{amt,dead:false};
+}
+function kill(t,src){
+  S.pieces=S.pieces.filter(x=>x!==t);
+  L(t.side,`${nm(t)} est vaincu.`);
+  if(src)levelUp(src);
+  if(t.t==="K")S.winner=opp(t.side);
+}
+function levelUp(p){
+  if(p.lvl>=3)return;
+  p.lvl++;p.max+=2;p.hp=Math.min(p.max,p.hp+2);p.atk+=1;
+  fx(p,"heal","Niv."+p.lvl);L(p.side,`${nm(p)} passe niveau ${p.lvl}.`);
+}
+function promote(p){
+  if(p.t==="P"&&((p.side==="w"&&p.r===0)||(p.side==="b"&&p.r===7))){
+    p.t="Q";p.hp=p.max=T.Q.hp;p.atk=T.Q.atk;p.lvl=1;p.cd=0;
+    fx(p,"heal","Dame");L(p.side,`Un Pion (${SIDES[p.side].name}) est promu en Dame.`);
+  }
+}
+
+function init(mode){
+  uid=0;
+  const back="RNBQKBNR",ps=[];
+  for(let c=0;c<8;c++){ps.push(mk(back[c],"b",0,c),mk("P","b",1,c),mk("P","w",6,c),mk(back[c],"w",7,c))}
+  for(const p of ps)if(p.t==="N")p.mode=p.side==="w"?(p.c===1?"sentinel":"lance"):(Math.random()<.5?"sentinel":"lance");
+  S={pieces:ps,turn:"w",turnNo:1,mana:{w:3,b:3},sel:null,skill:null,phase:"move",started:false,log:[],winner:null,fx:[],mode:mode||(S?S.mode:"ai"),sheet:null,info:false,view3d:S?S.view3d:true,busy:false};
+  startTurn();
+}
+function startTurn(){
+  const s=S.turn;
+  S.phase="move";S.mana[s]=Math.min(13,S.mana[s]+1);
+  for(const p of side(s)){
+    p.atks=0;p.usedSkill=false;p.hitIds=[];p.movedNow=false;p.reacted=false;p.cantMove=!!p.movedLast;p.movedLast=false;if(p.cd>0)p.cd--;if(p.buff>0)p.buff--;p.shield=0;
+    if(p.burn>0){p.burn--;hit(p,3,null,true)}
+  }
+  {const mine=side(s);
+    if(!S.winner&&mine.length===1&&mine[0].t==="K"&&!reach(mine[0]).length){
+      S.winner=opp(s);S.why=`Échec et mat : le Roi, dernière pièce des ${SIDES[s].name}, ne peut plus jouer.`;
+      L(s,"Le Roi ne peut plus jouer : échec et mat.");
+    }}
+  S.busy=S.mode==="ai"&&s==="b"&&!S.winner;
+  render();
+  if(S.busy)setTimeout(aiTurn,800);
+}
+function endTurn(){
+  const lost=countAttackers();if(lost)L(S.turn,`${lost} attaque${lost>1?"s":""} perdue${lost>1?"s":""} (${SIDES[S.turn].name}).`);S.skill=null;S.sel=null;
+  S.turn=opp(S.turn);if(S.turn==="w")S.turnNo++;
+  startTurn();
+}
+function doMove(p,r,c){
+  L(p.side,`${nm(p)} va en ${sq(r,c)}.`);
+  const mdr=r-p.r,mdc=c-p.c;
+  p.r=r;p.c=c;S.started=true;
+  if(p.t!=="P")p.face=faceOf(mdr,mdc);
+  if(p.t==="N"){p.movedLast=true;p.movedNow=true}
+  promote(p);
+  if(S.winner){S.sel=null;render();return}
+  toAttackPhase();
+}
+function doAttack(p,t){
+  turnTo(p,t);
+  const rm=rearMult(p,t);
+  hit(t,dmgOf(p,rm),p,false,rm>1?"dos":"");
+  p.atks++;p.hitIds.push(t.id);
+  if(S.winner){S.sel=null;render();return}
+  S.skill=null;
+  if(!countAttackers()){endTurn();return}
+  S.sel=canAtk(p)?p.id:null;
+  render();
+}
+function useSkill(p,t){
+  const k=SK[p.t];
+  S.mana[p.side]-=k.cost;p.cd=k.cd;p.usedSkill=true;S.started=true;S.skill=null;
+  L(p.side,`${nm(p)} lance ${k.n}.`);
+  k.run(p,t);
+  if(S.winner){S.sel=null;render();return}
+  S.sel=p.id;render();
+}
+const canAct=p=>p.side===S.turn&&!S.busy&&!S.winner;
+const maxAtk=()=>2;
+const atkTargets=p=>(p.t==="N"&&p.mode==="sentinel"&&p.movedNow)?[]:reach(p).filter(o=>o.kind==="atk").map(o=>at(o.r,o.c)).filter(t=>!p.hitIds.includes(t.id));
+const canAtk=p=>p.atks<maxAtk(p)&&atkTargets(p).length>0;
+const countAttackers=()=>side(S.turn).filter(canAtk).length;
+function mustMove(){const m=side(S.turn);return m.length===1&&m[0].t==="K"&&!m[0].cantMove&&reach(m[0]).some(o=>o.kind==="move")}
+function toAttackPhase(){
+  S.phase="atk";S.started=true;S.skill=null;S.sel=null;
+  if(!countAttackers()){L(S.turn,"Aucune attaque possible ce tour.");endTurn();return}
+  render();
+  if(S.busy)setTimeout(aiAtk,800);
+}
+function skillState(p){
+  const k=SK[p.t];
+  if(k.none)return{ok:false,why:""};
+  if(p.side!==S.turn||S.busy||S.winner)return{ok:false,why:"Pas votre tour"};
+  if(p.cd>0)return{ok:false,why:`Recharge : ${p.cd} tour${p.cd>1?"s":""}`};
+  if(S.mana[p.side]<k.cost)return{ok:false,why:`Mana insuffisant (${k.cost} requis)`};
+  if(!k.self&&!k.tg(p).length)return{ok:false,why:"Aucune cible à portée"};
+  return{ok:true};
+}
+
+/* IA des Portails */
+function aiTurn(){
+  let n=0;
+  const loop=()=>{
+    if(S.winner||S.turn!=="b")return;
+    const b=n++<3?aiBestSkill():null;
+    if(b){useSkill(b.p,b.t);setTimeout(loop,800)}
+    else setTimeout(aiMove,400);
+  };
+  loop();
+}
+function hitScore(d,t,x){return Math.min(d,t.hp)+VAL[t.t]*2+(d>=t.hp?20+VAL[t.t]*2:0)+(x||0)}
+function aiSkillScore(p,t){
+  switch(p.t){
+    case"P":return(!p.shield&&threatened(p.r,p.c,"w"))?5.5:0;
+    case"R":return p.hp>6?hitScore(dmgOf(p),t,-2):0;
+    case"B":{const h=Math.min(t.max-t.hp,Math.ceil(t.max/2));return h>=5?h*.8+(t.t==="K"?3:0)+VAL[t.t]*.3:0}
+    case"N":return hitScore(dmgOf(p),t,-1);
+    case"Q":return hitScore(dmgOf(p,.5),t,4);
+    case"K":{const al=side("b").filter(a=>a!==p&&cheb(a,p)<=2);const foe=side("w").some(e=>side("b").some(a=>cheb(a,e)<=3));return(al.length>=2&&foe&&p.buff<=0)?al.length*1.5+1:0}
+  }
+  return 0;
+}
+function aiBestSkill(){
+  let best=null;
+  for(const p of side("b")){
+    const k=SK[p.t];if(k.none||p.cd>0||S.mana.b<k.cost)continue;
+    for(const t of(k.self?[null]:k.tg(p))){const s=aiSkillScore(p,t);if(s>5&&(!best||s>best.s))best={p,t,s}}
+  }
+  return best;
+}
+function aiMove(){
+  if(S.winner||S.turn!=="b")return;
+  const wk=side("w").find(x=>x.t==="K");
+  let best={pass:true,s:mustMove()?-1e9:.6};
+  for(const p of side("b")){
+    if(p.cantMove)continue;
+    for(const o of reach(p)){
+      if(o.kind!=="move")continue;
+      const ox=p.r,oy=p.c;p.r=o.r;p.c=o.c;
+      const n=(p.t==="N"&&p.mode==="sentinel")?0:reach(p).filter(x=>x.kind==="atk").length;
+      p.r=ox;p.c=oy;
+      let sc=.1+n*2;
+      if(wk)sc+=(8-cheb(o,wk))*.25;
+      if(p.t==="P")sc+=o.r*.5;
+      if(p.t==="K")sc-=1.5;
+      if(threatened(o.r,o.c,"w"))sc-=VAL[p.t]*(n>0?.8:2);
+      if(threatened(p.r,p.c,"w"))sc+=VAL[p.t]*1.5;
+      sc+=Math.random()*.6;
+      if(sc>best.s)best={p,o,s:sc};
+    }
+  }
+  if(best.pass){toAttackPhase();return}
+  S.sel=best.p.id;
+  doMove(best.p,best.o.r,best.o.c);
+}
+function aiAtk(){
+  if(S.winner||S.turn!=="b"||S.phase!=="atk")return;
+  let best=null;
+  for(const p of side("b")){
+    if(!canAtk(p))continue;
+    for(const t of atkTargets(p)){
+      const sc=hitScore(dmgOf(p,rearMult(p,t)),t)+Math.random()*.6;
+      if(!best||sc>best.s)best={p,t,s:sc};
+    }
+  }
+  if(!best){endTurn();return}
+  S.sel=best.p.id;
+  doAttack(best.p,best.t);
+  if(S.turn==="b"&&!S.winner&&S.phase==="atk")setTimeout(aiAtk,800);
+}
+
+/* Interface */
+/* Personnages */
+const FC={sk:"#efc7a1",mt:"#d5dbe2",mt2:"#8b97a6",dk:"#151922",gd:"#f0bf45",wd:"#9a6a38",wh:"#f4f1ea",st:"#98a3b0",nv:"#2a3045",hr:"#5a3d22"};
+const poly=(pts,f,c="")=>`<polygon points="${pts}" ${f?`fill="${f}" `:""}class="${c} F-o"/>`;
+const ell=(cx,cy,rx,ry,f,c="")=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${f?`fill="${f}" `:""}class="${c} F-o"/>`;
+const circ=(cx,cy,r,f,c="")=>`<circle cx="${cx}" cy="${cy}" r="${r}" ${f?`fill="${f}" `:""}class="${c} F-o"/>`;
+const rect=(x,y,w,h,rx,f,c="")=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" ${f?`fill="${f}" `:""}class="${c} F-o"/>`;
+const path=(d,f,c="")=>`<path d="${d}" ${f?`fill="${f}" `:""}class="${c} F-o"/>`;
+const ring=(cx,cy,rx,ry,col,w)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" style="stroke:${col};stroke-width:${w}"/>`;
+const legs=(v,f)=>v==="right"?rect(41,89,9,13,3,f)+rect(50,89,9,13,3,f):rect(37,89,11,13,3,f)+rect(52,89,11,13,3,f);
+const hd=(v,cx,cy,r,hair)=>{
+  if(v==="up")return circ(cx,cy,r,hair);
+  let s=circ(cx,cy,r,FC.sk);
+  if(v==="down")s+=`<circle cx="${cx-r*.4}" cy="${cy+1.5}" r="1.9" fill="${FC.dk}"/><circle cx="${cx+r*.4}" cy="${cy+1.5}" r="1.9" fill="${FC.dk}"/>`;
+  else s+=`<circle cx="${cx+r*.5}" cy="${cy+1.5}" r="1.9" fill="${FC.dk}"/>`;
+  return s;
+};
+const SOC={
+  P:()=>ell(50,108,24,8,null,"F-tcd")+ell(50,103,24,8,FC.st)+ring(50,103,17,5,"var(--tc)",2.6),
+  R:()=>poly("14,108 86,108 88,119 12,119",null,"F-tcd")+poly("20,96 80,96 86,108 14,108",FC.st)+[24,45,66].map(x=>`<rect x="${x}" y="111" width="10" height="8" rx="1" fill="${FC.dk}" opacity=".55"/>`).join(""),
+  B:()=>poly("14,106 30,115 70,115 86,106 86,112 70,121 30,121 14,112",null,"F-tcd")+poly("30,97 70,97 86,106 70,115 30,115 14,106",FC.st)+ring(50,106,13,4,"var(--tc)",2.6),
+  N:()=>poly("14,108 50,120 86,108 86,114 50,126 14,114",null,"F-tcd")+poly("50,95 86,108 50,120 14,108",FC.st)+poly("50,101 70,108 50,115 30,108","none"),
+  Q:()=>ell(50,108,34,11,null,"F-tcd")+ell(50,104,34,11,FC.st)+ring(50,104,26,7.5,FC.gd,2.2)+[0,1,2,3,4,5].map(i=>{const a=i/6*Math.PI*2+.5;return`<circle cx="${50+Math.cos(a)*30}" cy="${104+Math.sin(a)*9}" r="2.4" fill="${FC.gd}"/>`}).join(""),
+  K:()=>ell(50,110,40,13,null,"F-tcd")+ell(50,105,40,13,FC.st)+ring(50,105,33,10,FC.gd,2.6)+[0,1,2,3,4,5,6,7].map(i=>{const a=i/8*Math.PI*2+.4;return`<circle cx="${50+Math.cos(a)*36.5}" cy="${105+Math.sin(a)*11.5}" r="2.2" fill="${FC.gd}"/>`}).join("")
+};
+const MK=v=>{
+  const g=`fill="${FC.gd}" class="F-o" style="stroke-width:1.5"`;
+  if(v==="down")return`<polygon points="42,121 58,121 50,129" ${g}/>`;
+  if(v==="right")return`<polygon points="90,99 90,113 99,106" ${g}/>`;
+  return`<polygon points="22,100 34,100 28,92" ${g}/><polygon points="66,100 78,100 72,92" ${g}/>`;
+};
+const CH={
+  P:()=>legs("down",FC.dk)+rect(34,55,32,37,9,null,"F-tc")+rect(34,76,32,6,2,null,"F-tcd")
+    +circ(29,73,11,FC.wd)+circ(29,73,4.2,FC.mt)+hd("down",50,42,12.5)
+    +path("M36 40 A14 14 0 0 1 64 40 Z",FC.mt)+rect(35,38,30,5,2,FC.mt2)
+    +`<line x1="73" y1="102" x2="73" y2="36" stroke="${FC.wd}" stroke-width="3.6" stroke-linecap="round"/>`
+    +poly("73,23 78,38 68,38",FC.mt)+circ(69,66,3.4,FC.sk),
+  R:v=>{
+    let s=legs(v,FC.nv);
+    s+=v==="right"?rect(39,52,22,42,7,FC.mt2):rect(30,52,40,42,7,FC.mt2);
+    if(v==="up")s+=rect(35,55,30,39,5,null,"F-tc")+circ(50,74,6,FC.gd);
+    s+=v==="right"?circ(50,58,9,FC.mt):circ(29,58,9,FC.mt)+circ(71,58,9,FC.mt);
+    const hx=v==="right"?39:35;
+    s+=rect(hx,17,8,8,1,FC.mt)+rect(hx+11,17,8,8,1,FC.mt)+rect(hx+22,17,8,8,1,FC.mt)+rect(hx,22,30,28,5,FC.mt)+rect(hx+13,16,4,32,1.5,null,"F-tc");
+    if(v==="down")s+=rect(39,35,22,5,2,FC.dk)+rect(31,58,38,38,6,null,"F-tc")+rect(36,63,28,28,4,"none")+circ(50,77,6,FC.gd);
+    if(v==="right")s+=rect(hx+16,35,14,5,2,FC.dk)+rect(61,55,10,44,3,null,"F-tc")+circ(66,77,2.6,FC.gd);
+    return s;
+  },
+  B:v=>{
+    const rb=v==="right"?"36,54 62,54 70,98 30,98":"34,54 66,54 76,98 24,98";
+    let s=poly(rb,null,"F-tc");
+    s+=poly(v==="right"?"29,93 71,93 70,98 30,98":"25,93 75,93 76,98 24,98",FC.gd);
+    if(v==="down")s+=poly("45,54 55,54 58,93 42,93",FC.wh)+`<path d="M50 63v10M45.5 67h9" stroke="${FC.gd}" stroke-width="2.4" stroke-linecap="round"/>`;
+    const sx=v==="right"?74:78;
+    s+=`<line x1="${sx}" y1="104" x2="${sx}" y2="34" stroke="${FC.wd}" stroke-width="3.6" stroke-linecap="round"/><circle cx="${sx}" cy="30" r="11" fill="${FC.gd}" opacity=".28"/>`+circ(sx,30,5.5,FC.gd);
+    s+=circ(v==="right"?68:72,72,3.4,FC.sk);
+    s+=hd(v,50,43,11.5,FC.hr);
+    const mx=v==="right"?53:50;
+    s+=poly(`${mx-13},39 ${mx},9 ${mx+13},39`,FC.wh);
+    if(v!=="up")s+=`<path d="M${mx} 17v14M${mx-5} 23h10" stroke="${FC.gd}" stroke-width="2.6" stroke-linecap="round"/>`;
+    return s;
+  },
+  N:v=>{
+    let s=legs(v,FC.nv);
+    s+=v==="right"?rect(39,54,22,40,6,FC.nv):poly("36,54 64,54 70,96 30,96",FC.nv);
+    s+=v==="right"?rect(38,52,24,7,3,null,"F-tc"):rect(35,52,30,7,3,null,"F-tc");
+    if(v==="down")s+=poly("26,66 30,64 37,84 33,86",FC.mt)+poly("74,66 70,64 63,84 67,86",FC.mt)+poly("56,58 66,58 70,84 61,80",null,"F-tc");
+    if(v==="up")s+=poly("60,58 68,58 72,86 63,82",null,"F-tc");
+    if(v==="right")s+=poly("62,72 84,66 86,70 64,78",FC.mt)+rect(58,70,6,8,2,FC.wd);
+    if(v==="right"){
+      s+=path("M40 46 Q38 20 54 11 Q70 22 65 46 Q52 52 40 46Z",FC.nv)+ell(58,41,6.5,6,FC.dk)+`<rect x="58" y="39.2" width="5" height="2.6" rx="1" fill="#fff"/>`;
+    }else{
+      s+=path("M36 46 Q35 20 52 11 Q66 22 64 46 Q50 52 36 46Z",FC.nv);
+      if(v==="down")s+=ell(50,41,9,6,FC.dk)+`<rect x="43" y="39.2" width="5" height="2.6" rx="1" fill="#fff"/><rect x="52" y="39.2" width="5" height="2.6" rx="1" fill="#fff"/>`;
+    }
+    return s;
+  },
+  Q:v=>{
+    let s=poly(v==="right"?"38,56 62,56 74,100 26,100":"36,56 64,56 80,100 20,100",null,"F-tc");
+    s+=poly(v==="right"?"27,94 73,94 74,100 26,100":"21,94 79,94 80,100 20,100",FC.gd);
+    s+=rect(v==="right"?39:37,70,v==="right"?22:26,5,2,FC.gd);
+    const hair="#dfe3ee";
+    s+=v==="up"?poly("35,40 65,40 68,80 32,80",hair):v==="right"?poly("38,40 52,40 48,74 33,72",hair):poly("36,40 64,40 67,72 33,72",hair);
+    s+=hd(v,50,43,11,hair);
+    const sx=v==="right"?76:82;
+    s+=`<line x1="${sx}" y1="106" x2="${sx}" y2="36" stroke="${FC.wd}" stroke-width="3.6" stroke-linecap="round"/><circle cx="${sx}" cy="28" r="12" fill="#7fe3ff" opacity=".3"/>`+poly(`${sx},17 ${sx+6},28 ${sx},39 ${sx-6},28`,"#7fe3ff");
+    s+=circ(v==="right"?66:72,74,3.4,FC.sk);
+    s+=ell(50,37,23,6,null,"F-tcd")+path("M33 37 L50 4 L67 37 Z",null,"F-tcd")+rect(36,30,28,5,1,FC.gd);
+    return s;
+  },
+  K:v=>{
+    let s=legs(v,FC.nv);
+    s+=poly(v==="right"?"30,55 52,55 56,98 28,98":"26,56 74,56 82,98 18,98",null,"F-tcd");
+    s+=v==="right"?rect(39,54,22,40,6,FC.mt2):rect(32,54,36,40,6,FC.mt2);
+    if(v==="down")s+=poly("44,54 56,54 58,94 42,94",null,"F-tc");
+    if(v==="up")s+=poly("30,52 70,52 76,96 24,96",null,"F-tcd")+circ(50,72,7,FC.gd);
+    s+=v==="right"?circ(50,58,10,FC.mt):circ(30,58,10,FC.mt)+circ(70,58,10,FC.mt);
+    s+=hd(v,50,38,11.5,FC.hr);
+    if(v==="down")s+=poly("41,45 59,45 55,56 50,60 45,56",FC.hr);
+    if(v==="right")s+=poly("47,45 62,45 58,56 53,59",FC.hr);
+    s+=path("M37 37 A13 13 0 0 1 63 37 Z",FC.mt)+poly("37,30 37,16 44,23 50,11 56,23 63,16 63,30",FC.gd);
+    if(v==="down")s+=rect(48,58,4,6,1,FC.gd)+rect(38,64,24,5,2,FC.gd)+rect(47,69,6,26,2,FC.mt)+poly("47,95 53,95 50,105",FC.mt)+circ(50,55,4,FC.gd)+circ(50,62,3.4,FC.sk);
+    if(v==="right")s+=rect(68,58,4,6,1,FC.gd)+rect(60,64,20,5,2,FC.gd)+rect(67,69,6,26,2,FC.mt)+poly("67,95 73,95 70,105",FC.mt)+circ(70,55,4,FC.gd)+circ(70,62,3.4,FC.sk);
+    return s;
+  }
+};
+function fig(t,side,face,hp){
+  const f=face||{dr:1,dc:0};
+  const v=t==="P"?"down":f.dr<0?"up":f.dr>0?"down":f.dc<0?"left":"right";
+  const flip=v==="left",vv=flip?"right":v;
+  let g=`<ellipse cx="50" cy="111" rx="${t==="K"?42:36}" ry="10" fill="rgba(0,0,0,.38)"/>`+SOC[t](vv)+(t==="P"?"":MK(vv))+CH[t](vv);
+  if(t==="P")g=`<g transform="translate(50 108) scale(.9) translate(-50 -108)">${g}</g>`;
+  return`<svg class="fig ${side}" viewBox="0 -8 100 138" aria-hidden="true"><g${flip?' transform="translate(100 0) scale(-1 1)"':""}>${g}</g>${hp==null?"":hpBar(hp)}</svg>`;
+}
+const hpBar=q=>{const c=q>.5?"#6ff0c0":q>.25?"#f2c35b":"#ff5578";return`<rect x="20" y="-7" width="60" height="7" rx="3.5" fill="rgba(0,0,0,.78)"/><rect x="22" y="-5" width="${Math.max(1,56*q)}" height="3" rx="1.5" fill="${c}"/>`};
+const ARW=f=>f.dr<0?"↑":f.dr>0?"↓":f.dc<0?"←":"→";
+
+const pips=n=>Array.from({length:13},(_,i)=>`<i class="${i<n?"f":""}"></i>`).join("");
+const hpc=p=>{const q=p.hp/p.max;return q>.5?"":q>.25?"mid":"low"};
+const KNTXT={
+  lance:"Lancier : attaque l'une des 3 cases devant lui (flèche dorée). Son orientation suit son dernier déplacement.",
+  sentinel:"Sentinelle : attaque dans son giron en L, mais pas le tour où il se déplace. Tout ennemi qui entre dans son giron devient une cible à votre prochain tour."
+};
+function onCell(r,c){
+  if(S.winner||S.busy)return;
+  const o=at(r,c),sel=S.sel?byId(S.sel):null;
+  if(S.skill&&sel){
+    const t=S.skill.tg.find(x=>x.r===r&&x.c===c);
+    if(t){useSkill(sel,t);return}
+    S.skill=null;
+  }
+  if(sel&&canAct(sel)){
+    if(S.phase==="move"&&!sel.cantMove){
+      const op=reach(sel).find(x=>x.kind==="move"&&x.r===r&&x.c===c);
+      if(op){doMove(sel,r,c);return}
+    }
+    if(S.phase==="atk"&&canAtk(sel)&&o&&o.side!==sel.side&&atkTargets(sel).includes(o)){doAttack(sel,o);return}
+  }
+  S.sel=o?(S.sel===o.id?null:o.id):null;
+  render();
+}
+function hintText(){
+  if(S.winner)return"Partie terminée.";
+  if(S.busy)return"Les Portails jouent…";
+  if(S.skill)return`${SK[byId(S.sel).t].n} : touchez une case violette.`;
+  const sel=S.sel?byId(S.sel):null;
+  if(S.phase==="move"){
+    if(sel&&sel.side===S.turn&&sel.cantMove)return"Ce Cavalier a bougé au tour précédent : il ne peut pas bouger.";
+    if(sel&&sel.side===S.turn)return"Case verte : déplacement. Une seule pièce bouge par tour.";
+    return S.started?"Mouvement : touchez une pièce puis une case verte, ou passez au combat.":"Touchez un Cavalier pour choisir son rôle (G Sentinelle, L Lancier), puis jouez.";
+  }
+  const n=countAttackers();
+  return`${n} pièce${n>1?"s":""} peu${n>1?"vent":"t"} encore attaquer (cercle rouge). Touchez-en une, puis sa cible. Les attaques non jouées sont perdues.`;
+}
+function popHTML(p){
+  const d=T[p.t],k=SK[p.t],mine=p.side===S.turn&&!S.busy&&!S.winner;
+  const ss=skillState(p),active=S.skill&&S.skill.id===p.id;
+  const atkNow=Math.round(p.atk*(p.buff>0?1.3:1));
+  const chips=(p.burn?`<span class="chip bn">Brûlure ${p.burn}</span>`:"")+(p.shield?`<span class="chip sh">Garde de fer</span>`:"")+(p.buff?`<span class="chip bf">Cri de guerre ${p.buff}</span>`:"")+(p.cantMove?`<span class="chip sh">Ne peut pas bouger</span>`:"")+(p.t==="N"&&p.mode==="sentinel"&&p.movedNow?`<span class="chip sh">A bougé : n'attaque pas</span>`:"");
+  let sk;
+  if(k.none)sk=`<div class="why">Pas de compétence pour le moment</div>`;
+  else if(mine)sk=active
+    ?`<button class="btn sb" data-act="cancel"><span>Annuler</span></button>`
+    :`<button class="btn sb" data-act="skill" ${ss.ok?"":"disabled"}><span>${k.n}</span><span class="cost">${k.cost} mana</span></button>`+(ss.ok?"":`<div class="why">${ss.why}</div>`);
+  else sk=`<div class="why">${k.n} · ${k.cost} mana · recharge ${k.cd} tours</div>`;
+  const det=S.info?`<div class="det"><p>${d.mv}</p>${p.t==="N"?`<p>${KNTXT[p.mode]}</p>`:""}${k.none?"":`<p><b>${k.n}.</b> ${k.d}</p><p class="meta">Mana ${k.cost} · recharge ${k.cd} tours${p.cd>0?` · reste ${p.cd}`:""}</p>`}</div>`:"";
+  const pick=(p.t==="N"&&!S.started&&(p.side==="w"||S.mode==="pvp"))?`<div class="srow"><span>Rôle</span><div class="seg" role="group"><button class="btn" data-kid="${p.id}" data-m="sentinel" aria-pressed="${p.mode==="sentinel"}">Sentinelle</button><button class="btn" data-kid="${p.id}" data-m="lance" aria-pressed="${p.mode==="lance"}">Lancier</button></div></div>`:"";
+  return`<div class="pop ${p.side}" id="pop"><div class="ph"><span class="thumb">${fig(p.t,p.side,p.face)}</span><div class="pt"><b>${d.n}${p.t==="N"?" · "+(p.mode==="lance"?"Lancier":"Sentinelle"):""}</b><small>${d.role} · Niv. ${p.lvl}/3</small></div><button class="x" data-act="close" aria-label="Fermer">×</button></div>
+  <div class="bar ${hpc(p)}"><u style="width:${Math.max(0,p.hp/p.max*100)}%"></u></div>
+  <div class="ps"><span>PV <b>${p.hp}/${p.max}</b></span><span>ATK <b>${atkNow}</b></span><span>Attaques <b>${p.atks}/2</b></span>${p.t==="P"?"":`<span>Regard <b>${ARW(p.face)}</b></span>`}</div>
+  ${chips?`<div class="chips">${chips}</div>`:""}
+  ${pick}<div class="sk2">${sk}<button class="lnk" data-act="info">${S.info?"Masquer":"Détails"}</button></div>${det}</div>`;
+}
+function placePop(sel){
+  const pop=$("#pop");if(!pop||!sel)return;
+  const cellEl=document.querySelector(`.sq[data-r="${sel.r}"][data-c="${sel.c}"]`);if(!cellEl)return;
+  const st=$("#stage").getBoundingClientRect(),cl=cellEl.getBoundingClientRect(),pr=pop.getBoundingClientRect();
+  let x=cl.left+cl.width/2-st.left-pr.width/2;
+  x=Math.max(4,Math.min(st.width-pr.width-4,x));
+  const y=sel.side==="w"?cl.bottom-st.top+6:cl.top-st.top-pr.height-6;
+  pop.style.left=x+"px";pop.style.top=y+"px";
+}
+function bestHTML(){
+  return Object.keys(T).map(t=>{
+    const d=T[t],k=SK[t];
+    const lv=[1,2,3].map(n=>`Niv. ${n} : ${d.hp+2*(n-1)} PV / ${d.atk+n-1} ATK`).join(" · ");
+    return`<div class="card"><div class="ch"><div class="thumb">${fig(t,"w",{dr:1,dc:0})}</div><div><h2>${d.n} · ${d.role}</h2><small>PV ${d.hp} · ATK ${d.atk}</small></div></div>
+    <p class="mvtxt">${d.mv}</p>
+    ${t==="N"?`<p class="mvtxt"><b>Sentinelle.</b> Attaque dans son giron en L, mais pas le tour où il se déplace. Tout ennemi qui entre dans son giron devient une cible à votre prochain tour : à vous de rester vigilant.</p><p class="mvtxt"><b>Lancier.</b> Attaque l'une des 3 cases devant lui. Son orientation suit son dernier déplacement. Rôle choisi avant la première action, définitif ensuite.</p>`:""}
+    <div class="skill"><h3>${k.n}</h3>${k.none?"":`<div class="meta">Mana ${k.cost} · Recharge ${k.cd} tours</div>`}<p>${k.d}</p></div>
+    <div class="lvls">${lv}</div></div>`;
+  }).join("");
+}
+function sheetHTML(){
+  const close=`<button class="btn" data-act="shut">Fermer</button>`;
+  if(S.sheet==="pieces")return`<div class="sh"><h2>Pièces</h2>${close}</div><div class="grid">${bestHTML()}</div>`;
+  if(S.sheet==="rules")return`<div class="sh"><h2>Règles</h2>${close}</div>`+$("#tplRules").innerHTML;
+  return`<div class="sh"><h2>Menu</h2>${close}</div>
+  <div class="card"><div class="mrow"><span>Mode (recommence la partie)</span><div class="seg" role="group"><button class="btn" data-mode="ai" aria-pressed="${S.mode==="ai"}">Contre l'IA</button><button class="btn" data-mode="pvp" aria-pressed="${S.mode==="pvp"}">À deux</button></div></div>
+  <div class="mrow"><span>Vue du plateau</span><div class="seg" role="group"><button class="btn" data-act="v3" aria-pressed="${S.view3d}">3D</button><button class="btn" data-act="v2" aria-pressed="${!S.view3d}">À plat</button></div></div>
+  <div class="mrow"><button class="btn pri" data-act="new">Nouvelle partie</button></div></div>
+  <div class="card log"><h3>Journal</h3>${S.log.map(e=>`<p class="${e.s}">${e.t}</p>`).join("")||"<p>Rien pour l'instant.</p>"}</div>`;
+}
+function render(){
+  const sel=S.sel?byId(S.sel):null;
+  const hl={};
+  if(sel&&!S.winner){
+    if(S.skill){for(const t of S.skill.tg)hl[t.r+","+t.c]="sk"}
+    else if(canAct(sel)){
+      if(S.phase==="move"){if(!sel.cantMove)for(const o of reach(sel))if(o.kind==="move")hl[o.r+","+o.c]="mv"}
+      else if(canAtk(sel)){for(const t of atkTargets(sel))hl[t.r+","+t.c]="at"}
+    }
+  }
+  let b="";
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const p=at(r,c),k=r+","+c,fl=S.fx.filter(f=>f.r===r&&f.c===c);
+    let cls="sq"+(sel&&sel.r===r&&sel.c===c?" sel":"")+(hl[k]?" "+hl[k]:"");
+    if(fl.length)cls+=" f-"+fl[fl.length-1].type;
+    if(p&&S.phase==="atk"&&!S.winner&&p.side===S.turn&&canAtk(p))cls+=" rdy";
+    let inner="";
+    if(p){
+      inner=`${fig(p.t,p.side,p.face,Math.max(0,p.hp/p.max))}`
+        +(p.lvl>1?`<span class="lv">${"<i></i>".repeat(p.lvl-1)}</span>`:"")
+        +((p.burn||p.shield||p.buff)?`<span class="st">${p.burn?'<i class="bn"></i>':""}${p.shield?'<i class="sh"></i>':""}${p.buff?'<i class="bf"></i>':""}</span>`:"")
+        +(p.t==="N"?`<span class="md">${p.mode==="lance"?"L":"G"}</span>`:"");
+    }
+    inner+=fl.filter(f=>f.txt).map(f=>`<span class="fl ${f.type}">${f.txt}</span>`).join("");
+    const lab=p?`${T[p.t].n} ${SIDES[p.side].name}, ${p.hp} PV sur ${p.max}, case ${sq(r,c)}`:`Case ${sq(r,c)}`;
+    b+=`<div role="button" tabindex="0" class="${cls}" data-r="${r}" data-c="${c}" aria-label="${lab}">${inner?`<span class="up">${inner}</span>`:""}</div>`;
+  }
+  $("#board").innerHTML=b;
+  $("#board").className="board"+(S.view3d?" t3":"");
+  $("#stage").className="stage"+(S.view3d?" s3":"");
+  $("#hud").innerHTML=["w","b"].map(s=>`<div class="side ${s==="w"?"":"tb2"}${S.turn===s&&!S.winner?" on":""}"><div class="sn"><span class="dot"></span>${SIDES[s].name}<span class="mn">${S.mana[s]}/13</span></div><div class="mana" role="img" aria-label="Mana ${S.mana[s]} sur 13">${pips(S.mana[s])}</div></div>`).join("");
+  $("#chip").textContent=S.winner?"Partie terminée":`Tour ${S.turnNo} · ${SIDES[S.turn].name} · ${S.phase==="move"?"1 Mouvement":"2 Attaques"}`;
+  $("#hint").textContent=hintText();
+  const su=$("#setup");
+  if(false){
+    const ss=S.mode==="pvp"?["w","b"]:["w"];
+    su.hidden=false;
+    su.innerHTML=ss.map(sd=>side(sd).filter(p=>p.t==="N").sort((x,y)=>x.c-y.c).map(p=>`<div class="srow"><span>${S.mode==="pvp"?SIDES[sd].name+" · ":""}Cavalier ${sq(p.r,p.c)}</span><div class="seg" role="group"><button class="btn" data-kid="${p.id}" data-m="sentinel" aria-pressed="${p.mode==="sentinel"}">Sentinelle</button><button class="btn" data-kid="${p.id}" data-m="lance" aria-pressed="${p.mode==="lance"}">Lancier</button></div></div>`).join("")).join("");
+  }else su.hidden=true;
+  const n=S.winner?0:countAttackers();
+  const eb=$("#endBtn");
+  eb.disabled=!!(S.winner||S.busy||(S.phase==="move"&&mustMove()));
+  eb.textContent=S.busy?"Les Portails jouent…":S.phase==="move"?(mustMove()?"Le Roi doit bouger":"Passer au combat"):(n?`Terminer (${n} attaque${n>1?"s":""} perdue${n>1?"s":""})`:"Terminer le tour");
+  $("#last").innerHTML=S.log.slice(0,2).map(e=>`<p class="${e.s}">${e.t}</p>`).join("");
+  const win=S.winner==="w";
+  $("#popbar").innerHTML=sel&&!S.winner?popHTML(sel):"";
+  $("#ov").innerHTML=(S.winner?`<div class="endc"><h2>${win?"Victoire des Éveillés":"Les Portails l'emportent"}</h2><p>${S.why||`Le Roi ${win?"des Portails":"des Éveillés"} est tombé.`}</p><button class="btn pri" data-act="new">Rejouer</button></div>`:"");
+  
+  const sh=$("#sheet");
+  sh.hidden=!S.sheet;
+  sh.innerHTML=S.sheet?sheetHTML():"";
+  S.fx=[];
+}
+
+$("#board").addEventListener("click",e=>{
+  const x=e.clientX,y=e.clientY;let best=null;
+  document.querySelectorAll("#board .sq .fig").forEach(g=>{
+    const q=g.getBoundingClientRect(),w=q.width,h=q.height;
+    if(x>=q.left+w*.2&&x<=q.right-w*.2&&y>=q.top+h*.1&&y<=q.top+h*.96){
+      const c=g.closest(".sq"),rr=+c.dataset.r;
+      if(!best||rr>best.rr)best={rr,c};
+    }
+  });
+  const b=best?best.c:e.target.closest(".sq");
+  if(b)onCell(+b.dataset.r,+b.dataset.c);
+});
+$("#board").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const b=e.target.closest(".sq");if(b){e.preventDefault();onCell(+b.dataset.r,+b.dataset.c)}});
+const ovClick=e=>{
+  const kb=e.target.closest("[data-kid]");if(kb){if(!S.started){byId(+kb.dataset.kid).mode=kb.dataset.m;render()}return}
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const a=b.dataset.act,p=S.sel?byId(S.sel):null;
+  if(a==="new"){init();return}
+  if(a==="close"){S.sel=null;S.skill=null;render();return}
+  if(a==="info"){S.info=!S.info;render();return}
+  if(S.winner||S.busy||!p)return;
+  if(a==="cancel"){S.skill=null;render();return}
+  if(a==="skill"&&skillState(p).ok){
+    const k=SK[p.t];
+    if(k.self)useSkill(p,null);else{S.skill={id:p.id,tg:k.tg(p)};render()}
+  }
+};
+$("#ov").addEventListener("click",ovClick);$("#popbar").addEventListener("click",ovClick);
+$("#endBtn").addEventListener("click",()=>{if(S.winner||S.busy)return;if(S.phase==="move"){if(!mustMove())toAttackPhase()}else endTurn()});
+$("#setup").addEventListener("click",e=>{const b=e.target.closest("[data-kid]");if(!b||S.started)return;byId(+b.dataset.kid).mode=b.dataset.m;render()});
+document.querySelectorAll("[data-sheet]").forEach(b=>b.addEventListener("click",()=>{S.sheet=b.dataset.sheet;render()}));
+$("#sheet").addEventListener("click",e=>{
+  const m=e.target.closest("[data-mode]");
+  if(m){init(m.dataset.mode);return}
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const a=b.dataset.act;
+  if(a==="shut"){S.sheet=null;render();return}
+  if(a==="new"){init();return}
+  if(a==="v3"||a==="v2"){S.view3d=a==="v3";render()}
+});
+init("ai");
+})();
+</script>
+
+</body></html>
