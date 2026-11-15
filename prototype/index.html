@@ -201,6 +201,7 @@ h2.sec{font:800 15px var(--fd);letter-spacing:.08em;margin:0 0 10px}
       </ol>
       <p class="note">Valeurs à équilibrer ensemble : mana de départ, gain par tour, bonus de niveau. Pas encore dans ce prototype : classes et races, équipements, cartes, arbre complet des compétences du GDD.</p>
     </div></template>
+<script src="personnages.js"></script>
 <script>
 
 (function(){
@@ -216,6 +217,10 @@ const T={
   Q:{n:"Dame",role:"Archimage",g:"♛",hp:18,atk:11,mv:"Toutes les directions, sans limite de cases. Attaque au corps à corps : les 8 cases voisines (2 cibles max par tour)."},
   K:{n:"Roi",role:"Seigneur de guerre",g:"♚",hp:12,atk:11,mv:"1 case dans toutes les directions. Attaque les 8 cases voisines. S'il tombe, la partie est perdue."}
 };
+// Les pièces gardent leurs mouvements et compétences, mais portent les noms des héros.
+if (window.DBCPersonnages) for (const [type, person] of Object.entries(window.DBCPersonnages.CAST)) {
+  T[type].n = person.nom + " (" + person.piece + ")";
+}
 const G=t=>T[t].g+"︎";
 const inb=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
 const sgn=Math.sign;
@@ -574,6 +579,8 @@ const CH={
   }
 };
 function fig(t,side,face,hp){
+  // Personnages Damned Bastard : variantes low-poly sur les vraies cases.
+  if (window.DBCPersonnages) return window.DBCPersonnages.fig(t,side,face,hp);
   const f=face||{dr:1,dc:0};
   const v=t==="P"?"down":f.dr<0?"up":f.dr>0?"down":f.dc<0?"left":"right";
   const flip=v==="left",vv=flip?"right":v;
