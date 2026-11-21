@@ -741,7 +741,7 @@ function render(){
     }
     inner+=fl.filter(f=>f.txt).map(f=>`<span class="fl ${f.type}">${f.txt}</span>`).join("");
     const lab=p?`${displayName(p)} ${SIDES[p.side].name}, ${p.hp} PV sur ${p.max}, case ${sq(r,c)}`:`Case ${sq(r,c)}`;
-    b+=`<div role="button" tabindex="0" class="${cls}" data-r="${r}" data-c="${c}" aria-label="${lab}">${inner?`<span class="up">${inner}</span>`:""}</div>`;
+    b+=`<div role="button" tabindex="0" class="${cls}" data-r="${r}" data-c="${c}" ${p&&p.heroId?`data-hero="${p.heroId}"`:""} aria-label="${lab}">${inner?`<span class="up">${inner}</span>`:""}</div>`;
   }
   $("#board").innerHTML=b;
   $("#board").className="board"+(S.view3d?" t3":"");
@@ -814,5 +814,7 @@ init("ai");
 })();
 </script>
 
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
+<script src="character3d.js"></script>
 <script src="menu.js"></script>
 </body></html>
