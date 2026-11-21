@@ -21,7 +21,7 @@
      engine=THREE;const loader=new GLTFLoader();
      const gltf=await loader.loadAsync(MODEL);model=gltf;
      scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(35,1,0.01,100);
-     camera.position.set(3.2,3.4,5.5);camera.lookAt(0,1.1,0);
+     camera.up.set(0,0,1);camera.position.set(5,-7,5);camera.lookAt(0,0,1.8);
      scene.add(new THREE.HemisphereLight(0xffffff,0x4d5470,2.1));
      const sun=new THREE.DirectionalLight(0xffe8c4,2.2);sun.position.set(-3,8,5);scene.add(sun);
      scene.add(gltf.scene);gltf.scene.scale.setScalar(.9);
