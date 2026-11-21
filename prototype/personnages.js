@@ -4,12 +4,7 @@
 (function (global) {
   'use strict';
   const CAST = Object.freeze({
-    K: { nom: 'Slenth', piece: 'Roi' },
-    Q: { nom: 'Shalan', piece: 'Dame' },
-    B: { nom: 'Piz', piece: 'Fou' },
-    N: { nom: 'Léonen', piece: 'Cavalier' },
-    R: { nom: 'Jokash', piece: 'Tour' },
-    P: { nom: 'Ritchard', piece: 'Pion' }
+    slenth: { nom: 'Slenth', depart: 'Pion', evolution: 'À définir', statut: 'jouable' }
   });
   const ink = '#20242b', skin = '#ecc5a5', shadowSkin = '#c49475';
   const poly = (points, fill) => `<polygon points="${points}" fill="${fill}" stroke="${ink}" stroke-width="1.15" stroke-linejoin="round"/>`;
@@ -107,7 +102,7 @@
       face(v,hairs.ritchard,'#9b4e34');
   }
   const RENDER={K:slenth,Q:shalan,B:piz,N:leonen,R:jokash,P:ritchard};
-  function fig(type,side,faceDir,hpFraction) {
+  function fig(type,side,faceDir,hpFraction,heroId) {
     const f=faceDir||{dr:1,dc:0};
     const v=f.dr<0?'up':f.dr>0?'down':f.dc<0?'left':'right';
     const mirror=v==='left';
@@ -117,7 +112,9 @@
     const pedestal=poly('22,104 50,96 79,104 50,113',teamColor)+
       poly('22,104 50,113 50,120 23,111',teamDark)+
       poly('50,113 79,104 77,111 50,120',teamDark);
-    const model=RENDER[type]||slenth;
+    // Identité du héros indépendante de la classe d'échecs.
+    // Slenth reste visuellement Slenth lorsqu'il évoluera.
+    const model=heroId==='slenth'?slenth:(RENDER[type]||slenth);
     // Pas de texte rendu dans les cases : couleur du socle seule pour distinguer les équipes.
     let inner=`<ellipse cx="51" cy="115" rx="31" ry="8" fill="rgba(0,0,0,.25)"/>`+
       `<g${mirror?' transform="translate(100 0) scale(-1 1)"':''}>${pedestal}${model(vv)}</g>`;
