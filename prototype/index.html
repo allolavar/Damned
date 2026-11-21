@@ -251,10 +251,10 @@ const T={
   Q:{n:"Dame",role:"Archimage",g:"♛",hp:18,atk:11,mv:"Toutes les directions, sans limite de cases. Attaque au corps à corps : les 8 cases voisines (2 cibles max par tour)."},
   K:{n:"Roi",role:"Seigneur de guerre",g:"♚",hp:12,atk:11,mv:"1 case dans toutes les directions. Attaque les 8 cases voisines. S'il tombe, la partie est perdue."}
 };
-// Les pièces gardent leurs mouvements et compétences, mais portent les noms des héros.
-if (window.DBCPersonnages) for (const [type, person] of Object.entries(window.DBCPersonnages.CAST)) {
-  T[type].n = person.nom + " (" + person.piece + ")";
-}
+// Chaque héros commence comme PION ; sa future classe ne dépend pas de son identité.
+const HEROES = Object.freeze({slenth:{name:"Slenth",visual:"slenth",startRole:"P",evolutions:[]}});
+const heroName=p=>p.heroId&&HEROES[p.heroId]?HEROES[p.heroId].name:null;
+const displayName=p=>heroName(p)?heroName(p)+" ("+T[p.t].n+")":T[p.t].n;
 const G=t=>T[t].g+"︎";
 const inb=(r,c)=>r>=0&&r<8&&c>=0&&c<8;
 const sgn=Math.sign;
@@ -265,7 +265,7 @@ const at=(r,c)=>S.pieces.find(x=>x.r===r&&x.c===c);
 const byId=id=>S.pieces.find(x=>x.id===id);
 const side=s=>S.pieces.filter(p=>p.side===s);
 const opp=s=>s==="w"?"b":"w";
-const nm=p=>`${T[p.t].n} (${SIDES[p.side].name})`;
+const nm=p=>`${displayName(p)} (${SIDES[p.side].name})`;
 const L=(s,t)=>{S.log.unshift({s,t});if(S.log.length>12)S.log.pop()};
 const fx=(t,type,txt)=>S.fx.push({r:t.r,c:t.c,type,txt});
 const dmgOf=(p,m=1)=>Math.max(1,Math.round(p.atk*(p.buff>0?1.3:1)*m));
@@ -344,13 +344,14 @@ function kill(t,src){
 }
 function levelUp(p){
   if(p.lvl>=3)return;
-  p.lvl++;p.max+=2;p.hp=Math.min(p.max,p.hp+2);p.atk+=1;
+  p.lvl++;if(p.heroId){p.evolutionStage=p.lvl-1;L(p.side,`${heroName(p)} atteint un nouveau palier d'évolution (classe à définir).`);}p.max+=2;p.hp=Math.min(p.max,p.hp+2);p.atk+=1;
   fx(p,"heal","Niv."+p.lvl);L(p.side,`${nm(p)} passe niveau ${p.lvl}.`);
 }
 function promote(p){
   if(p.t==="P"&&((p.side==="w"&&p.r===0)||(p.side==="b"&&p.r===7))){
-    p.t="Q";p.hp=p.max=T.Q.hp;p.atk=T.Q.atk;p.lvl=1;p.cd=0;
-    fx(p,"heal","Dame");L(p.side,`Un Pion (${SIDES[p.side].name}) est promu en Dame.`);
+    p.t="Q";p.hp=p.max=T.Q.hp;p.atk=T.Q.atk;p.cd=0;
+    if(p.heroId){p.evolutionStage=(p.evolutionStage||0)+1;fx(p,"heal","Évolution");L(p.side,`${heroName(p)} évolue en Dame ; son identité est conservée.`);}
+    else{p.lvl=1;fx(p,"heal","Dame");L(p.side,`Un Pion (${SIDES[p.side].name}) est promu en Dame.`);}
   }
 }
 
@@ -358,6 +359,10 @@ function init(mode){
   uid=0;
   const back="RNBQKBNR",ps=[];
   for(let c=0;c<8;c++){ps.push(mk(back[c],"b",0,c),mk("P","b",1,c),mk("P","w",6,c),mk(back[c],"w",7,c))}
+  // Slenth rejoint l'équipe des Éveillés en tant que pion jouable (e2).
+  // Les autres héros seront ajoutés individuellement après validation de leurs visuels.
+  const slenthPawn=ps.find(p=>p.side==="w"&&p.t==="P"&&p.r===6&&p.c===4);
+  if(slenthPawn){slenthPawn.heroId="slenth";slenthPawn.evolutionStage=0;slenthPawn.evolutionChoices=[];}
   for(const p of ps)if(p.t==="N")p.mode=p.side==="w"?(p.c===1?"sentinel":"lance"):(Math.random()<.5?"sentinel":"lance");
   S={pieces:ps,turn:"w",turnNo:1,mana:{w:3,b:3},sel:null,skill:null,phase:"move",started:false,log:[],winner:null,fx:[],mode:mode||(S?S.mode:"ai"),sheet:null,info:false,view3d:S?S.view3d:true,busy:false};
   startTurn();
@@ -612,9 +617,9 @@ const CH={
     return s;
   }
 };
-function fig(t,side,face,hp){
+function fig(t,side,face,hp,heroId){
   // Personnages Damned Bastard : variantes low-poly sur les vraies cases.
-  if (window.DBCPersonnages) return window.DBCPersonnages.fig(t,side,face,hp);
+  if (window.DBCPersonnages) return window.DBCPersonnages.fig(t,side,face,hp,heroId);
   const f=face||{dr:1,dc:0};
   const v=t==="P"?"down":f.dr<0?"up":f.dr>0?"down":f.dc<0?"left":"right";
   const flip=v==="left",vv=flip?"right":v;
@@ -729,13 +734,13 @@ function render(){
     if(p&&S.phase==="atk"&&!S.winner&&p.side===S.turn&&canAtk(p))cls+=" rdy";
     let inner="";
     if(p){
-      inner=`${fig(p.t,p.side,p.face,Math.max(0,p.hp/p.max))}`
+      inner=`${fig(p.t,p.side,p.face,Math.max(0,p.hp/p.max),p.heroId)}`
         +(p.lvl>1?`<span class="lv">${"<i></i>".repeat(p.lvl-1)}</span>`:"")
         +((p.burn||p.shield||p.buff)?`<span class="st">${p.burn?'<i class="bn"></i>':""}${p.shield?'<i class="sh"></i>':""}${p.buff?'<i class="bf"></i>':""}</span>`:"")
         +(p.t==="N"?`<span class="md">${p.mode==="lance"?"L":"G"}</span>`:"");
     }
     inner+=fl.filter(f=>f.txt).map(f=>`<span class="fl ${f.type}">${f.txt}</span>`).join("");
-    const lab=p?`${T[p.t].n} ${SIDES[p.side].name}, ${p.hp} PV sur ${p.max}, case ${sq(r,c)}`:`Case ${sq(r,c)}`;
+    const lab=p?`${displayName(p)} ${SIDES[p.side].name}, ${p.hp} PV sur ${p.max}, case ${sq(r,c)}`:`Case ${sq(r,c)}`;
     b+=`<div role="button" tabindex="0" class="${cls}" data-r="${r}" data-c="${c}" aria-label="${lab}">${inner?`<span class="up">${inner}</span>`:""}</div>`;
   }
   $("#board").innerHTML=b;
