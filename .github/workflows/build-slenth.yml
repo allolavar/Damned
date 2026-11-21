@@ -1,0 +1,30 @@
+name: Build Slenth 3D asset
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/build_slenth.py'
+      - '.github/workflows/build-slenth.yml'
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check numpy trimesh
+      - run: python tools/build_slenth.py
+      - name: Commit GLB to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prototype/assets/slenth_rigged_v1.glb
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: generate animated Slenth GLB"
+            git push
+          fi
