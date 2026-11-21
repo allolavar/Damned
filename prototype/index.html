@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="stylesheet" href="menu.css"></head><body>
 <title>Damned Bastard Chess</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Cinzel:wght@600;800&display=swap">
@@ -165,7 +165,7 @@ h2.sec{font:800 15px var(--fd);letter-spacing:.08em;margin:0 0 10px}
     <h1>Damned Bastard Chess</h1>
     <button class="tb" data-sheet="pieces">Pièces</button>
     <button class="tb" data-sheet="rules">Règles</button>
-    <button class="tb" data-sheet="menu">Menu</button>
+    <button class="tb" data-sheet="menu">Menu</button><button class="tb" id="dbc-open-home" type="button">Accueil</button>
   </header>
   <div class="hud" id="hud"></div>
   <div class="phase" id="chip"></div>
@@ -184,6 +184,40 @@ h2.sec{font:800 15px var(--fd);letter-spacing:.08em;margin:0 0 10px}
   </div>
 </div>
 <div class="sheet" id="sheet" hidden></div>
+
+<section class="dbc-home" id="dbc-home" aria-label="Menu principal Damned Bastard Chess" hidden>
+ <div class="dbc-home-wrap">
+  <header class="dbc-hud">
+   <div class="dbc-profile">
+    <span class="dbc-avatar" aria-hidden="true">♚</span>
+    <span class="dbc-level"><strong>Damned Bastard</strong><small>Niveau 1</small></span>
+   </div>
+   <div class="dbc-counter" aria-label="Cristaux"><span class="gem">◆</span><strong>0</strong></div>
+   <div class="dbc-counter" aria-label="Or"><span class="coin">●</span><strong>0</strong></div>
+  </header>
+  <div class="dbc-heading">
+   <h1>Damned Bastard<span>Chess</span></h1>
+   <div class="dbc-sub">1. Forêt maudite</div>
+   <div class="dbc-stageprogress">Affrontement isométrique</div>
+  </div>
+  <div class="dbc-hero" aria-label="Plateau d'échecs en forêt avec personnages">
+   <img src="../assets/plateaux/plateau_foret_iso.png" alt="Échiquier de la forêt maudite" loading="eager">
+   <span class="dbc-preview-piece blue" id="dbc-preview-blue" aria-hidden="true"></span>
+   <span class="dbc-preview-piece red" id="dbc-preview-red" aria-hidden="true"></span>
+  </div>
+  <div class="dbc-progress" aria-hidden="true"><span class="icon">♛</span><span class="track"></span><span class="icon">♕</span></div>
+  <div class="dbc-badges" aria-hidden="true"><span><b>⚔</b></span><span><b>♞</b></span><span><b>☷</b></span></div>
+  <button type="button" class="dbc-combat" data-dbc-action="combat">COMBAT</button>
+  <nav class="dbc-bottomnav" aria-label="Navigation du jeu">
+   <button type="button" class="dbc-tab" data-dbc-action="heroes"><span class="ico">♞</span><span>Héros</span></button>
+   <button type="button" class="dbc-tab" data-dbc-action="cards" aria-disabled="true"><span class="ico">▧</span><span>Cartes</span></button>
+   <button type="button" class="dbc-tab active" data-dbc-action="combat" aria-current="page"><span class="ico">⚔</span><span>Combat</span></button>
+   <button type="button" class="dbc-tab" data-dbc-action="shop" aria-disabled="true"><span class="ico">♜</span><span>Boutique</span></button>
+   <button type="button" class="dbc-tab" data-dbc-action="clans" aria-disabled="true"><span class="ico">⚑</span><span>Clans</span></button>
+  </nav>
+  <div class="dbc-home-note" id="dbc-home-note" hidden role="status"><div id="dbc-home-note-title"></div><button type="button" data-dbc-action="close-note">Fermer</button></div>
+ </div>
+</section>
 <template id="tplRules"><div class="card rules">
       <h2 class="sec">Règles du prototype</h2>
       <ol>
@@ -775,4 +809,5 @@ init("ai");
 })();
 </script>
 
+<script src="menu.js"></script>
 </body></html>
